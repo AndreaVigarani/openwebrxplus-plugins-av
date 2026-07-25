@@ -1,3 +1,10 @@
+/*
+ * Plugin: add floating window to control folter bandwidth
+ *
+ * License: MIT
+ * Copyright (c) 2026 Andrea Vigarani
+ * Some code has been borrowed from https://aganet.github.io/openwebrxplus-rig-skin/receiver/rig_skin/rig_skin.js
+ */
 Plugins.filter_control = Plugins.filter_control || {};
 Plugins.filter_control._version = 1.0;
 Plugins.filter_control.no_css = true;
