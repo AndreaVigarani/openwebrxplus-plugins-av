@@ -1,5 +1,5 @@
 /*
- * Plugin: add floating window to control folter bandwidth
+ * Plugin: add floating window to control filter bandwidth
  *
  * License: MIT
  * Copyright (c) 2026 Andrea Vigarani
