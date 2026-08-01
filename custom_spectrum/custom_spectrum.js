@@ -89,7 +89,74 @@ Plugins.custom_spectrum.injectCss = function () {
             box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.6) !important;
             margin-top: 5px !important;
         }
-      
+      /* Enable Flexbox column layout for the parent container */
+        #openwebrx-frequency-container {
+            display: flex !important;
+            flex-direction: column !important;
+        }
+
+        /* 1. Bandplan at the very top */
+        .openwebrx-bandplan-container {
+            order: 1 !important;
+        }
+
+        /* 2. Scale Canvas moved ABOVE the spectrum */
+        #openwebrx-scale-container {
+            order: 2 !important;
+        }
+
+        /* 3. Spectrum Canvas moved BELOW scale, directly touching the waterfall */
+        .openwebrx-spectrum-container {
+            order: 3 !important;
+        }
+
+        /* Ensure no weird bottom margin separates the spectrum from the waterfall */
+        .openwebrx-spectrum-container {
+            margin-bottom: 0 !important;
+        }
+            /* 1. Master Container: Define your custom unified gradient or theme background */
+            #openwebrx-frequency-container {
+            display: flex !important;
+            flex-direction: column !important;
+
+            /* OPTION A: Dark Modern Radio Slate (Fade down into waterfall) */
+            background: linear-gradient(180deg, #3e3e3e 0%, #121215 70%, #0a0a0c 100%) !important;
+
+            /* OPTION B: If you prefer keeping the theme PNG background, uncomment below: */
+            /* background-image: url("static/gfx/openwebrx-scale-background.png") !important; */
+            /* background-repeat: repeat-x !important; */
+            /* background-size: cover !important; */
+
+            z-index: 1001 !important;
+        }
+
+        /* 2. Flex Order Setup */
+        .openwebrx-bandplan-container { order: 1 !important; }
+        #openwebrx-scale-container    { order: 2 !important; }
+        .openwebrx-spectrum-container { order: 3 !important; }
+
+        /* 3. Strip Hardcoded Backgrounds from Scale Container & Canvas */
+        #openwebrx-scale-container {
+            height: 47px !important;
+            overflow: hidden !important;
+            z-index: 1000 !important;
+            position: relative !important;
+            background: transparent !important; /* Let parent background show through */
+        }
+
+        #openwebrx-scale-canvas {
+            background: transparent !important;
+        }
+
+        /* 4. Strip Hardcoded Backgrounds from Spectrum Container & Canvas */
+        .openwebrx-spectrum-container {
+            background: transparent !important;
+            margin-bottom: 0 !important;
+        }
+
+        #openwebrx-spectrum-canvas {
+            background: transparent !important;
+        }
     `;
     document.head.appendChild(style);
 };
@@ -100,8 +167,6 @@ Plugins.custom_spectrum._peaksBuffer = null;
 // Offscreen buffer canvas for persistence/3D trailing
 Plugins.custom_spectrum._trailCanvas = document.createElement('canvas');
 Plugins.custom_spectrum._trailCtx = Plugins.custom_spectrum._trailCanvas.getContext('2d');
-// Add to Plugins.custom_spectrum
-
 
 
 Plugins.custom_spectrum.init = async function () {
@@ -125,7 +190,7 @@ Plugins.custom_spectrum.init = async function () {
     
     Plugins.utils.on_ready(() => {
        this.hookSpectrumDraw();
-       this.hookCustomScale(); // Instantly swaps in your refactored scale logic!
+       this.hookCustomScale(); // swaps scale logic 
        this.initOverlayCanvas();
     this.buildUi();
 
@@ -140,7 +205,7 @@ Plugins.custom_spectrum.init = async function () {
     return true;
 };
 /**
- * Derives a clean, readable color from OpenWebRX's current Waterfall LUT
+ * Derives a readable color from OpenWebRX's current Waterfall LUT
  * @param {number} percentile Normalized dynamic range position (0.0 = min, 1.0 = max)
  * @param {number} maxLightness RGB saturation ceiling to prevent whiteouts (0-255)
  */
@@ -196,13 +261,10 @@ Plugins.custom_spectrum.drawPeakHoldBloom = function (mainCtx, specObj, spec_wid
     mainCtx.save();
 
     // 1. Wide Bloom Halo (Background Glow)
-    mainCtx.lineWidth = 4;
+    mainCtx.lineWidth = 1.3;
     mainCtx.strokeStyle = peakColor;
     mainCtx.globalAlpha = 0.55; // Soft glow
     mainCtx.stroke();
-
-   
-
     mainCtx.restore();
 };
 
@@ -310,11 +372,11 @@ Plugins.custom_spectrum.drawCustomSpectrum = function (specObj, mainCtx) {
     const y_ratio = spec_height / data_height;
 
     const primaryColor = (this.settings.usePaletteColors !== false) 
-        ? this.getDerivedContourColor(0.65, 220)   
+        ? this.getDerivedContourColor(0.55, 180)   
         : this.settings.primaryColor;
 
     const peakColor = (this.settings.usePaletteColors !== false) 
-        ? this.getDerivedContourColor(0.35, 200)   
+        ? this.getDerivedContourColor(0.95, 220)   
         : this.settings.peakColor;
 
     const type = this.settings.type;
@@ -380,11 +442,7 @@ Plugins.custom_spectrum.drawCustomSpectrum = function (specObj, mainCtx) {
     } else {
         mainCtx.clearRect(0, 0, spec_width, spec_height);
 
-        // --- DRAW PEAK HOLD BLOOM BEHIND PRIMARY TRACE ---
-        if (this.settings.enablePeakHold) {
-            this.drawPeakHoldBloom(mainCtx, specObj, spec_width, spec_height, data_start, x_ratio, y_ratio, peakColor);
-        }
-
+        
         // --- Option A: SpectraVue Full-Extent Palette ---
         if (type === 'spectravue') {
             const fillGradient = mainCtx.createLinearGradient(0, 0, 0, spec_height);
@@ -486,7 +544,7 @@ Plugins.custom_spectrum.drawCustomSpectrum = function (specObj, mainCtx) {
             const fillGradient = mainCtx.createLinearGradient(0, 0, 0, spec_height);
             const strokeGradient = mainCtx.createLinearGradient(0, 0, 0, spec_height);
             fillGradient.addColorStop(0, primaryColor);
-            fillGradient.addColorStop(1, peakColor);
+            fillGradient.addColorStop(1, "rgba(8, 8, 8, 0.9)");
             strokeGradient.addColorStop(0,primaryColor);
             mainCtx.beginPath();
             for (let x = 0; x < spec_width; x++) {
@@ -506,6 +564,11 @@ Plugins.custom_spectrum.drawCustomSpectrum = function (specObj, mainCtx) {
             mainCtx.fillStyle = fillGradient;
             mainCtx.fill();
         }
+        // --- DRAW PEAK HOLD BLOOM BEHIND PRIMARY TRACE ---
+        if (this.settings.enablePeakHold) {
+            this.drawPeakHoldBloom(mainCtx, specObj, spec_width, spec_height, data_start, x_ratio, y_ratio, peakColor);
+        }
+
     }
     var demods = typeof getDemodulators === 'function' ? getDemodulators() : [];
     for (var i=0; i<demods.length; i++) {
